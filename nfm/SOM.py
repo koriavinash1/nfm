@@ -5,12 +5,7 @@ from matplotlib import cm
 from scipy import signal
 from tqdm import tqdm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
-from GaussianStatistics import *
-from configure import Config
 
-
-Gstat  = GaussianStatistics()
-config = Config()
 
 
 class SOM():
@@ -27,6 +22,8 @@ class SOM():
         self.weights = np.random.rand(self.output_size[0], self.output_size[1], self.input_num)
 
     def Normalize(self, mat):
+        """
+        """
         # mat = mat/ np.max(mat)
         # mat = mat / np.sum(abs(mat))
         mat = (mat - np.min(mat))/ (np.max(mat) - np.min(mat))
@@ -34,24 +31,28 @@ class SOM():
         return mat
 
     def nstnbridx(self, row_data):
+        """
+        """
         initial_dis = float("inf")
         index_bmu   = [0, 0]
-        for i in range(self.output_size[0]):
-            for j in range(self.output_size[1]):
-                dist_neuron = np.linalg.norm(row_data-self.weights[i, j, :])
+        # for i in range(self.output_size[0]):
+        #     for j in range(self.output_size[1]):
+        for dist_neurons in np.linalg.norm((row_data[None, None, ...] -self.weights), axis=2):
+            for dist_neuron in dist_neurons:
                 if dist_neuron < initial_dis:
                     initial_dis = dist_neuron
                     index_bmu = [i, j]# Best matching unit (BMU)
         return np.array(index_bmu)
 
     def nbridxdis(self, index_bmu):
+        """
+        """
         nbrind = np.zeros(((2*self.nrad + 1)**2, 2))
-        for i in range(2*self.nrad + 1):
-            for j in range(2*self.nrad + 1):
-                ix = i*(2*self.nrad+1) + j
-                nbrind[ix,:] = [i - self.nrad, j- self.nrad] + index_bmu
+        xindx  = np.arange(2*self.nrad + 1)
+        yindx  = np.arange(2*self.nrad + 1)
 
-        # print (nbrind, (nbrind[:,1] >= 0))
+        idx = xindx*(self.nrad + 1) + yindx
+        nbrind[idx,:] = [xindx - self.nrad, yindx- self.nrad] + index_bmu
         nbrind = nbrind[np.where((nbrind[:,0] >= 0) * (nbrind[:,1] >= 0))]
         nbrind = nbrind[np.where((nbrind[:,0] < self.output_size[0]) * (nbrind[:,1] < self.output_size[1]))]
 
@@ -88,17 +89,16 @@ class SOM():
         """
         x = X.flatten('F')
         assert len(x) == wt.shape[2]
-        Y = np.zeros(self.output_size)
 
-        for i in range(self.output_size[0]):
-            for j in range(self.output_size[1]):
-                diff = wt[i, j, :] - x
-                dis  = diff.dot(diff)
-                Y[i, j] = np.exp(-1.*dis / sig**2)
+        diff = wt - x[None, None, ...]
+        dis  = diff.dot(diff)
+        Y    = np.exp(-1.*dis / sig**2)
 
         return self.Normalize(Y)
 
     def view_weights(self):
+        """
+        """
         shape = self.weights.shape
         m = int(np.sqrt(shape[2]))
         img = np.zeros((shape[0]*m, shape[1]*m))
@@ -124,32 +124,8 @@ class SOM():
     def load_weights(self, path):
         self.weights = np.load(path)
 
-    def get_weights(self):
+    def save_weights(self, save_path):
         """
         """
-        np.save(config.SOM_weights_path, self.weights)
+        np.save(save_path, self.weights)
         return self.weights
-
-
-
-## Data Generation....
-# data = []
-# for angle in range(0, 180, 2):
-#     _bar = Gstat.OrientationBar(N = config.N,
-#                                 theta = angle,
-#                                 mu = config.mu,
-#                                 Sigma = config.std,
-#                                 display = False)
-#     data.append(_bar.flatten('F'))
-# data = np.array(data)
-
-# print data.shape
-# # ##
-# SOM = SOM((10,10), data, 500, 0.01)
-# SOM.fit()
-# SOM.load_weights(config.SOM_weights_path)
-# SOM.moveresp()
-# SOM.view_weights()
-
-# Show trained weights
-# print "Trained weights from SOM,", SOM.get_weights()

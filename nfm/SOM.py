@@ -97,7 +97,7 @@ class SOM():
         img = np.zeros((shape[0]*m, shape[1]*m))
         for i in range(shape[0]):
             for j in range(shape[1]):
-                img[i*m:(i+1)*m, j*m:(j+1)*m] = self.weights[i,j,:].reshape(m, m)
+                img[i*m:(i+1)*m, j*m:(j+1)*m] = self.weights[i,j,:].reshape(m, m).T
 
         plt.imshow(img)
         plt.show()
@@ -112,7 +112,6 @@ class SOM():
             X = x.reshape(int(N), int(N), order='F')
             y = self.response(X, self.weights)
             # now = datetime.now()
-
             if display:
                 plt.subplot(1,2,1)
                 plt.imshow(X)

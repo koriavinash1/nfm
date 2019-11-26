@@ -5,3 +5,5 @@ neural field models
 ![orientationbar](./imgs/som_response.gif)
 
 ![orientationbar](./imgs/SOM_weights.png)
+
+![orientationbar](./imgs/MNIST_weights.png)

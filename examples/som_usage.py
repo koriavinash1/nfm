@@ -26,13 +26,13 @@ data = 1.0*(np.array(data) > 0.2)
 for _data_ in x_train:
     data.append(_data_.flatten('F')/255.0)
 
-data = np.array(data)
+data = 1.0*(np.array(data) > 0.2)
 print (data.shape)
 # ##
 SOM = SOM((28, 28), data, 25, learning_rate=1e-2, rad = 7, sig = 5)
-SOM.fit()
-SOM.save_weights(config.SOM_weights_path)
+# SOM.fit()
+# SOM.save_weights(config.SOM_weights_path)
 
 SOM.load_weights(config.SOM_weights_path)
-# SOM.moveresp()
+SOM.moveresp()
 SOM.view_weights()

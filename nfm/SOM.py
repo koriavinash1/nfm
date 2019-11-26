@@ -111,7 +111,7 @@ class SOM():
             N = np.sqrt(len(x))
             X = x.reshape(int(N), int(N), order='F')
             y = self.response(X, self.weights)
-            # now = datetime.now()
+            now = datetime.now()
             if display:
                 plt.subplot(1,2,1)
                 plt.imshow(X)
@@ -121,8 +121,8 @@ class SOM():
                 plt.imshow(y)
                 plt.gca().xaxis.set_major_locator(plt.NullLocator())
                 plt.gca().yaxis.set_major_locator(plt.NullLocator())
-                plt.pause(0.01)
-                # plt.savefig(now.strftime("%H:%M:%S:%f")+'.png', bbox_inches='tight')
+                # plt.pause(0.01)
+                plt.savefig(now.strftime("%H:%M:%S:%f")+'.png', bbox_inches='tight')
         plt.close()
         pass
 

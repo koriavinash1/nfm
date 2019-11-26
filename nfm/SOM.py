@@ -5,7 +5,7 @@ from matplotlib import cm
 from scipy import signal
 from tqdm import tqdm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
-
+from datetime import datetime
 
 class SOM():
     """
@@ -106,17 +106,24 @@ class SOM():
     def moveresp(self, display=True):
         """
         """
-        plt.ion()
-        for x in self.data:
+        # plt.ion()
+        for i, x in enumerate(self.data):
             N = np.sqrt(len(x))
             X = x.reshape(int(N), int(N), order='F')
             y = self.response(X, self.weights)
+            # now = datetime.now()
+
             if display:
                 plt.subplot(1,2,1)
                 plt.imshow(X)
+                plt.gca().xaxis.set_major_locator(plt.NullLocator())
+                plt.gca().yaxis.set_major_locator(plt.NullLocator())
                 plt.subplot(1,2,2)
                 plt.imshow(y)
-                plt.pause(1)
+                plt.gca().xaxis.set_major_locator(plt.NullLocator())
+                plt.gca().yaxis.set_major_locator(plt.NullLocator())
+                plt.pause(0.01)
+                # plt.savefig(now.strftime("%H:%M:%S:%f")+'.png', bbox_inches='tight')
         plt.close()
         pass
 

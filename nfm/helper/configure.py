@@ -37,8 +37,8 @@ class Config():
 	eA   = 2
 
 	# for orientation bar
-	mu  = np.array([5., 5.])
-	std = np.array([[20., -19.8], [-19.8, 20]])
+	mu  = np.array([16., 16.])
+	std = 20.*np.array([[20., -19.8], [-19.8, 20]])
 
 	savepath = './logs'
 	SOM_weights_path = './SOM_weights.npy'

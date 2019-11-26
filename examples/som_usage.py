@@ -10,7 +10,7 @@ config = Config()
 
 # Data Generation....
 data = []
-for angle in range(0, 180, 2):
+for angle in range(0, 180, 1):
     _bar = Gstat.OrientationBar(N = config.N,
                                 theta = angle,
                                 mu = config.mu,
@@ -21,13 +21,10 @@ data = np.array(data)
 
 print (data.shape)
 # ##
-SOM = SOM((10,10), data, 500, 0.01)
+SOM = SOM((32, 32), data, 2000)
 SOM.fit()
 SOM.save_weights(config.SOM_weights_path)
 
 SOM.load_weights(config.SOM_weights_path)
 SOM.moveresp()
 SOM.view_weights()
-
-# Show trained weights
-print ("Trained weights from SOM,", SOM.get_weights())

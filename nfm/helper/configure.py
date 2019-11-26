@@ -30,7 +30,7 @@ class Config():
 	ci_range = np.array(range(-20, 50, 4))/100.0
 
 	# Gaussian params
-	N    = 10
+	N    = 32
 	iRad = 4
 	eRad = 2
 	iA   = 1

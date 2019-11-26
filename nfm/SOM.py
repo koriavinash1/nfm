@@ -11,13 +11,13 @@ from matplotlib.ticker import LinearLocator, FormatStrFormatter
 class SOM():
     """
     """
-    def __init__(self,  output_size, data, epochs=1, learning_rate=1e-3):
+    def __init__(self,  output_size, data, epochs=1, learning_rate=1e-3, rad = 4, sig=0.1):
         self.data = data
         self.iterations = len(data)*epochs
         self.output_size = output_size
         self.input_num = data.shape[1]
-        self.nrad  = 2 #int...
-        self.sig   = 0.5
+        self.nrad  = rad #int...
+        self.sig   = sig
         self.alpha = learning_rate
         self.weights = np.random.rand(self.output_size[0], self.output_size[1], self.input_num)
 
@@ -25,23 +25,16 @@ class SOM():
         """
         """
         # mat = mat/ np.max(mat)
-        # mat = mat / np.sum(abs(mat))
-        mat = (mat - np.min(mat))/ (np.max(mat) - np.min(mat))
+        mat = mat / np.sum(abs(mat))
+        # mat = (mat - np.min(mat))/ (np.max(mat) - np.min(mat))
         # mat = (mat - np.mean(mat))/ np.var(mat)**0.5
         return mat
 
     def nstnbridx(self, row_data):
         """
         """
-        initial_dis = float("inf")
-        index_bmu   = [0, 0]
-        # for i in range(self.output_size[0]):
-        #     for j in range(self.output_size[1]):
-        for dist_neurons in np.linalg.norm((row_data[None, None, ...] -self.weights), axis=2):
-            for dist_neuron in dist_neurons:
-                if dist_neuron < initial_dis:
-                    initial_dis = dist_neuron
-                    index_bmu = [i, j]# Best matching unit (BMU)
+        dist_neurons = np.linalg.norm((row_data[None, None, ...] -self.weights), axis=2)
+        index_bmu = np.where(dist_neurons == np.min(dist_neurons)) # Best matching unit (BMU)
         return np.array(index_bmu)
 
     def nbridxdis(self, index_bmu):
@@ -52,15 +45,13 @@ class SOM():
         yindx  = np.arange(2*self.nrad + 1)
 
         idx = xindx*(self.nrad + 1) + yindx
-        nbrind[idx,:] = [xindx - self.nrad, yindx- self.nrad] + index_bmu
+        nbrind[idx,:] = np.concatenate([(xindx - self.nrad)[..., None], 
+                                        (yindx- self.nrad)[..., None]], axis=1) + index_bmu.T
         nbrind = nbrind[np.where((nbrind[:,0] >= 0) * (nbrind[:,1] >= 0))]
         nbrind = nbrind[np.where((nbrind[:,0] < self.output_size[0]) * (nbrind[:,1] < self.output_size[1]))]
 
-        mm, _  = nbrind.shape
-        nbrdist = np.zeros(mm)
-        for i in range(mm):
-            diff = nbrind[i,:] - index_bmu
-            nbrdist[i] = diff.dot(diff)
+        diff = nbrind - index_bmu.T
+        nbrdist = np.linalg.norm(diff, axis=1)**2
         return nbrind, nbrdist
 
     def fit(self):
@@ -69,7 +60,7 @@ class SOM():
         for itter in tqdm(range(self.iterations)):
             initial_dis = float("inf")
             row_index = np.random.randint(len(self.data))
-            learning_rate = self.alpha*np.exp(-itter/self.iterations)
+            learning_rate = self.alpha # *np.exp(-itter/self.iterations)
             row_data = self.data[row_index]
             bmu_idx  = self.nstnbridx(row_data)
             nbrind, nbrdist = self.nbridxdis(bmu_idx)
@@ -84,15 +75,15 @@ class SOM():
         print ("SOM Training done!!...")
         pass
 
-    def response(self, X, wt, sig = 0.5):
+    def response(self, X, wt):
         """
         """
         x = X.flatten('F')
         assert len(x) == wt.shape[2]
 
-        diff = wt - x[None, None, ...]
-        dis  = diff.dot(diff)
-        Y    = np.exp(-1.*dis / sig**2)
+        diff = 1.0* (wt - x[None, None, ...])
+        dis  = np.linalg.norm(diff, axis=2)**2
+        Y    = np.exp(-1.*dis / self.sig**2)
 
         return self.Normalize(Y)
 
@@ -112,13 +103,18 @@ class SOM():
     def moveresp(self, display=True):
         """
         """
+        plt.ion()
         for x in self.data:
             N = np.sqrt(len(x))
             X = x.reshape(int(N), int(N), order='F')
             y = self.response(X, self.weights)
             if display:
+                plt.subplot(1,2,1)
+                plt.imshow(X)
+                plt.subplot(1,2,2)
                 plt.imshow(y)
-                plt.show()
+                plt.pause(1)
+        plt.close()
         pass
 
     def load_weights(self, path):

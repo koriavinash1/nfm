@@ -41,7 +41,7 @@ class Config():
 	std = 20.*np.array([[20., -19.8], [-19.8, 20]])
 
 	savepath = './logs'
-	SOM_weights_path = '../logs/MNIST_SOM_weights.npy'
+	SOM_weights_path = '../logs/cifar10_SOM_weights.npy'
 	Orientation_path = './Orientation_bars.npy'
 
 	# if not os.path.exists(savepath):

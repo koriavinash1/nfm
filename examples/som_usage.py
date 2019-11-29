@@ -37,10 +37,10 @@ for percentage in percentages:
 	save_path = '../logs/SOM_weights_MNIST_noise_{}.npy'.format(percentage)
 
 	# ##
-	som = SOM((28, 28), data, 25, learning_rate=1e-2, rad = 5, sig = 3)
-	# som.fit()
+	som = SOM((28, 28), 25, learning_rate=1e-2, rad = 5, sig = 3)
+	# som.fit(data)
 	# som.save_weights(save_path)
 
 	som.load_weights(save_path)
-	som.moveresp()
+	som.moveresp(data)
 	som.view_weights(path = '../logs/SOM_weights_MNIST_noise_{}.png'.format(percentage))

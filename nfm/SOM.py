@@ -10,14 +10,13 @@ from datetime import datetime
 class SOM():
     """
     """
-    def __init__(self,  output_size, data, epochs=1, learning_rate=1e-3,rad=4,sig=1):
-        self.data = data
-        self.iterations = len(data)*epochs
+    def __init__(self,  output_size, input_shape, epochs=1, learning_rate=1e-3,rad=4,sig=1):
+        self.iterations  = len(data)*epochs
         self.output_size = output_size
-        self.input_num = data.shape[1]
-        self.nrad  = rad #int...
-        self.sig   = sig
-        self.alpha = learning_rate
+        self.input_num   = np.prod(input_shape)
+        self.nrad    = rad 
+        self.sig     = sig
+        self.alpha   = learning_rate
         self.weights = np.random.rand(self.output_size[0], self.output_size[1], self.input_num)
 
     def Normalize(self, mat):
@@ -56,14 +55,14 @@ class SOM():
         return nbrind, nbrdist
 
 
-    def fit(self):
+    def fit(self, data):
         """
         """
         for itter in tqdm(range(self.iterations)):
             initial_dis = float("inf")
-            row_index = np.random.randint(len(self.data))
+            row_index = np.random.randint(len(data))
             learning_rate = self.alpha*np.exp(-itter/self.iterations)
-            row_data = self.data[row_index]
+            row_data = data[row_index]
             bmu_idx  = self.nstnbridx(row_data)
             nbrind, nbrdist = self.nbridxdis(bmu_idx)
             mx, _ = nbrind.shape
@@ -103,11 +102,11 @@ class SOM():
         plt.savefig(path)
 
 
-    def moveresp(self, display=True):
+    def moveresp(self, data, display=True):
         """
         """
         # plt.ion()
-        for i, x in enumerate(self.data):
+        for i, x in enumerate(data):
             N = np.sqrt(len(x))
             X = x.reshape(int(N), int(N), order='F')
             y = self.response(X, self.weights)
@@ -126,8 +125,11 @@ class SOM():
         plt.close()
         pass
 
+
     def load_weights(self, path):
         self.weights = np.load(path)
+        return self.weights
+        
 
     def save_weights(self, path):
         """

@@ -1,13 +1,9 @@
-
-
+import os
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
 from scipy import signal
-from matplotlib.ticker import LinearLocator, FormatStrFormatter
-from GaussianStatistics import *
-from SOM import SOM
+from .helper.utils import display
+from .helper.GaussianStatistics import *
+from .SOM import SOM
 
 Gstat = GaussianStatistics()
 
@@ -18,6 +14,7 @@ class NFM(object):
                     dt   = 0.01,
                     sdt  = 0.1,
                     Iext = 1,
+                    verbose  = True,
                     exe_rad    = 2, 
                     inhb_rad   = 4, 
                     exe_ampli  = 2., 
@@ -31,16 +28,20 @@ class NFM(object):
         # gaussian statistics...
         self.eA  = exe_ampli
         self.iA  = inhb_ampli
+
         # neural field parameters
         self.X     = 0.05*abs(np.random.randn(size[0], size[1]))
         self.Y     = 0.05*abs(np.random.randn(size[0], size[1]))
         self.Iext  = Iext
         self.dt    = dt
         self.sdt   = sdt
+        self.verbose = verbose
 
         # lateral weights
         gauss1, gauss2   = Gstat.DOG(self.iRad, self.eRad, self.iA, self.eA)
         self.kernel      = gauss1 + gauss2
+
+        
 
 
     def Normalize(self, mat, type_='MinMax'):
@@ -62,7 +63,6 @@ class NFM(object):
 
 
     def lateralDynamicsFHN(self, 
-                            verbose = True, 
                             alpha = 0.5, 
                             beta  = 0.1, 
                             gamma = 0.1, 
@@ -82,14 +82,15 @@ class NFM(object):
         self.X = self.X + xdot*self.dt
         self.Y = self.Y + ydot*self.dt
 
-        if verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
+        if self.verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
 
 
     def lateralDynamicsHopf(self,
-                            verbose = True,
                             alpha   = 0.5,
                             beta    = 0.1,
-                            gamma   = 0.1):
+                            gamma   = 0.1,
+                            tau     = 0.,
+                            ci      = 0.):
         """
 
         """
@@ -103,14 +104,14 @@ class NFM(object):
         self.X = self.X + xdot*self.dt
         self.Y = self.Y + ydot*self.dt
 
-        if verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
+        if self.verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
 
 
     def lateralDynamicsVPole(self,
-                            verbose = True, 
                             alpha = 0.5, 
-                            beta  = 0.1, 
-                            mu    = 0.08, 
+                            beta  = 0.1,
+                            gamma = 0., 
+                            tau   = 0.08, 
                             ci    = -0.2):
         """
 
@@ -126,10 +127,46 @@ class NFM(object):
         self.X = self.X + xdot*self.dt
         self.Y = self.Y + ydot*self.dt
 
-        if verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
+        if self.verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
+
+
+    def spatioTemporalData(self, T, dynamics   = 'FHN',
+                                visualize    = None,
+                                dynamic_args = {'alpha': 0.5,
+                                                'beta' : 0.1,
+                                                'gamma': 0.1,
+                                                'tau'  : 0.08,
+                                                'ci'   : -0.2}):
+        """
+
+        """
+        if dynamics == 'FHN':
+            self.dynamics = self.lateralDynamicsFHN
+        elif dynamics == 'Hopf':
+            self.dynamics = self.lateralDynamicsHopf
+        elif dynamics == 'VPole':
+            self.dynamics = self.lateralDynamicsVPole
+        else:
+            raise ValueError ("Given dynamics {} not in ['FHN', 'Hopf', 'VPole']".format(dynamics))
+
+
+        nsheets = []
+        for i in range(0, int(T/self.dt)):
+            self.dynamics(**dynamic_args)
+            if i % int(self.sdt/self.dt) == 0:
+                if visualize:
+                    fig = plt.figure('spatio Temporal')
+                    display(self.X, "Time " + str(i), fig)
+                nsheets.append(self.X)
+
+        nsheets = np.array(nsheets)
+        return nsheets
 
 
     def fanoFactor(self, sig):
+        """
+
+        """
         return np.var(sig)/np.mean(sig)
 
 

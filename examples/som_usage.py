@@ -4,14 +4,14 @@ sys.path.append('..')
 from nfm.helper.GaussianStatistics import *
 from nfm.helper.configure import Config
 from nfm.SOM import SOM
-from keras.datasets import cifar10
+from keras.datasets import mnist
 
-(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
 # Gstat  = GaussianStatistics()
 config = Config()
 
 # Data Generation....
-data = []
+
 """
 for angle in range(0, 180, 2):
     _bar = Gstat.OrientationBar(N = config.N,
@@ -23,16 +23,24 @@ for angle in range(0, 180, 2):
 data = 1.0*(np.array(data) > 0.2)
 """
 
-for _data_ in x_test:
-    data.append(_data_[: ,:, 0].flatten('F')/255.0)
+percentages = [0.01, 0.1, 0.2, 0.4, 0.5, 0.6]
 
-data = 1.0*(np.array(data))
-print (data.shape)
-# ##
-SOM = SOM((32, 32), data, 25, learning_rate=1e-2, rad = 7, sig = 5)
-# SOM.fit()
-# SOM.save_weights(config.SOM_weights_path)
+for percentage in percentages:
+	data = []
+	for _data_ in x_test[:30]:
+		noise = percentage*np.random.randn(_data_.shape[0]*_data_.shape[1])
+		data.append(_data_.flatten('F')/255.0 + noise)
 
-SOM.load_weights(config.SOM_weights_path)
-SOM.moveresp()
-SOM.view_weights()
+	data = 1.0*(np.array(data))
+	print (data.shape)
+
+	save_path = '../logs/SOM_weights_MNIST_noise_{}.npy'.format(percentage)
+
+	# ##
+	som = SOM((28, 28), data, 25, learning_rate=1e-2, rad = 5, sig = 3)
+	# som.fit()
+	# som.save_weights(save_path)
+
+	som.load_weights(save_path)
+	som.moveresp()
+	som.view_weights(path = '../logs/SOM_weights_MNIST_noise_{}.png'.format(percentage))

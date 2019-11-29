@@ -91,7 +91,7 @@ class SOM():
         return self.Normalize(Y)
 
 
-    def view_weights(self):
+    def view_weights(self, path):
         shape = self.weights.shape
         m = int(np.sqrt(shape[2]))
         img = np.zeros((shape[0]*m, shape[1]*m))
@@ -100,7 +100,7 @@ class SOM():
                 img[i*m:(i+1)*m, j*m:(j+1)*m] = self.weights[i,j,:].reshape(m, m).T
 
         plt.imshow(img)
-        plt.show()
+        plt.savefig(path)
 
 
     def moveresp(self, display=True):
@@ -121,8 +121,8 @@ class SOM():
                 plt.imshow(y)
                 plt.gca().xaxis.set_major_locator(plt.NullLocator())
                 plt.gca().yaxis.set_major_locator(plt.NullLocator())
-                # plt.pause(0.01)
-                plt.savefig(now.strftime("%H:%M:%S:%f")+'.png', bbox_inches='tight')
+                plt.pause(1)
+                # plt.savefig(now.strftime("%H:%M:%S:%f")+'.png', bbox_inches='tight')
         plt.close()
         pass
 

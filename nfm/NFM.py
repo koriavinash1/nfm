@@ -7,63 +7,131 @@ from matplotlib import cm
 from scipy import signal
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from GaussianStatistics import *
-from configure import Config
 from SOM import SOM
 
 Gstat = GaussianStatistics()
-config= Config()
 
 # NFM 2D implementation
 
 class NFM(object):
-    def __init__(self, size, exe_rad = 2,inhb_rad = 4, exe_ampli = 2., inhb_ampli = 1., aff = 1):
+    def __init__(self, size, 
+                    dt   = 0.01,
+                    sdt  = 0.1,
+                    Iext = 1,
+                    exe_rad    = 2, 
+                    inhb_rad   = 4, 
+                    exe_ampli  = 2., 
+                    inhb_ampli = 1.):
+        """
+
+        """
         self.eRad  = exe_rad
         self.iRad  = inhb_rad
+
         # gaussian statistics...
         self.eA  = exe_ampli
         self.iA  = inhb_ampli
         # neural field parameters
-        self.Z     = 0.05*abs(np.random.randn(size[0], size[1]))
-        self.W     = 0.05*abs(np.random.randn(size[0], size[1]))
-        self.aff   = aff
+        self.X     = 0.05*abs(np.random.randn(size[0], size[1]))
+        self.Y     = 0.05*abs(np.random.randn(size[0], size[1]))
+        self.Iext  = Iext
+        self.dt    = dt
+        self.sdt   = sdt
+
         # lateral weights
         gauss1, gauss2   = Gstat.DOG(self.iRad, self.eRad, self.iA, self.eA)
-        # Gstat.Visualize(gauss1+gauss2, _type = '2d')
-        self.kernel= gauss1 + gauss2
+        self.kernel      = gauss1 + gauss2
 
 
-    def Normalize(self, mat):
-        # mat = mat/ np.max(mat)
-        # mat = mat / np.sum(abs(mat))
-        mat = (mat - np.min(mat))/ (np.max(mat) - np.min(mat))
-        # mat = (mat - np.mean(mat))/ np.var(mat)**0.5
+    def Normalize(self, mat, type_='MinMax'):
+        """
+
+        """
+
+        if type_ == 'L1':
+            mat = mat/ (np.sum(np.abs(mat),axis=(0, 1)) + np.sum(np.abs(mat),axis=(2,3)))[:, :, None, None]
+        elif type_ == 'MinMax':
+            mat = (mat - np.min(mat))/ (np.max(mat) - np.min(mat))
+        elif type_ == 'Zscore':
+            mat = (mat - np.mean(mat))/ np.var(mat)**0.5
+        elif type_ == 'tanh':
+            mat = np.tanh(mat)
+        else:
+            raise ValueError("Invalid Type found")
         return mat
 
-    def lateralDynamics(self, verbose = True, ci=config.ci):
-        temp_eff = self.aff
-        temp_inh = self.Normalize(signal.convolve2d(self.Z, self.kernel, mode = 'same') + self.Z)
-        I = config.ai*temp_eff + config.bi*temp_inh + ci
+
+    def lateralDynamicsFHN(self, 
+                            verbose = True, 
+                            alpha = 0.5, 
+                            beta  = 0.1, 
+                            gamma = 0.1, 
+                            tau   = 0.08, 
+                            ci    = -0.2):
+        """
+
+        """
+        temp_inh = self.Normalize(signal.convolve2d(self.X, self.kernel, mode = 'same') + self.Z)
+        I = alpha*self.Iext + beta*temp_inh + ci
         I[I < 0] = 0
 
-        v1 = self.Z
-        w1 = self.W
+        fv   = self.X*(alpha - self.X)*(self.X - 1)
+        xdot = (fv - self.Y + I)/tau
+        ydot = beta*self.X - gamma*self.Y
 
-        fv   = v1*(config.a - v1)*(v1 - 1)
-        vdot = (fv - w1 + I)/config.freq_ctrl
-        wdot = config.b*v1 - config.gamma*w1
+        self.X = self.X + xdot*self.dt
+        self.Y = self.Y + ydot*self.dt
 
-        v1 = v1 + vdot*config.dt
-        w1 = w1 + wdot*config.dt
+        if verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
 
-        self.Z = v1
-        self.W = w1
 
-        # self.Z = self.Normalize(self.Z)
-        # self.W = self.Normalize(self.W)
-        if verbose: print 'max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I))
+    def lateralDynamicsHopf(self,
+                            verbose = True,
+                            alpha   = 0.5,
+                            beta    = 0.1,
+                            gamma   = 0.1):
+        """
+
+        """
+        temp_inh = self.Normalize(signal.convolve2d(self.X, self.kernel, mode = 'same') + self.Z)
+        I = beta*temp_inh + gamma*self.Iext
+        I[I < 0] = 0
+
+        xdot = -self.X + alpha*self.Y + self.Y*self.X**2
+        ydot = I - alpha*self.Y - self.Y*self.X**2
+
+        self.X = self.X + xdot*self.dt
+        self.Y = self.Y + ydot*self.dt
+
+        if verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
+
+
+    def lateralDynamicsVPole(self,
+                            verbose = True, 
+                            alpha = 0.5, 
+                            beta  = 0.1, 
+                            mu    = 0.08, 
+                            ci    = -0.2):
+        """
+
+        """
+        temp_inh = self.Normalize(signal.convolve2d(self.X, self.kernel, mode = 'same') + self.Z)
+        I = alpha*self.Iext + beta*temp_inh + ci
+        I[I < 0] = 0
+
+        fv   = self.X*(alpha - self.X)*(self.X - 1)
+        xdot = (fv - self.Y + I)*mu
+        ydot = self.X / tau
+
+        self.X = self.X + xdot*self.dt
+        self.Y = self.Y + ydot*self.dt
+
+        if verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
+
 
     def fanoFactor(self, sig):
         return np.var(sig)/np.mean(sig)
+
 
     def sanity_check(self, I, Zold, Wold, dt=0.01):
         """

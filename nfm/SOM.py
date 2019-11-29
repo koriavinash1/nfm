@@ -10,8 +10,8 @@ from datetime import datetime
 class SOM():
     """
     """
-    def __init__(self,  output_size, input_shape, epochs=1, learning_rate=1e-3,rad=4,sig=1):
-        self.iterations  = len(data)*epochs
+    def __init__(self, output_size, input_shape, epochs=1, learning_rate=1e-3, rad=4, sig=1):
+        self.epochs  = epochs
         self.output_size = output_size
         self.input_num   = np.prod(input_shape)
         self.nrad    = rad 
@@ -58,10 +58,11 @@ class SOM():
     def fit(self, data):
         """
         """
-        for itter in tqdm(range(self.iterations)):
+        iterations = len(data)*self.epochs
+        for itter in tqdm(range(iterations)):
             initial_dis = float("inf")
             row_index = np.random.randint(len(data))
-            learning_rate = self.alpha*np.exp(-itter/self.iterations)
+            learning_rate = self.alpha*np.exp(-itter/iterations)
             row_data = data[row_index]
             bmu_idx  = self.nstnbridx(row_data)
             nbrind, nbrdist = self.nbridxdis(bmu_idx)
@@ -129,7 +130,7 @@ class SOM():
     def load_weights(self, path):
         self.weights = np.load(path)
         return self.weights
-        
+
 
     def save_weights(self, path):
         """

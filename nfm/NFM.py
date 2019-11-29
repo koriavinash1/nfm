@@ -71,7 +71,7 @@ class NFM(object):
         """
 
         """
-        temp_inh = self.Normalize(signal.convolve2d(self.X, self.kernel, mode = 'same') + self.Z)
+        temp_inh = self.Normalize(signal.convolve2d(self.X, self.kernel, mode = 'same') + self.X)
         I = alpha*self.Iext + beta*temp_inh + ci
         I[I < 0] = 0
 
@@ -82,7 +82,7 @@ class NFM(object):
         self.X = self.X + xdot*self.dt
         self.Y = self.Y + ydot*self.dt
 
-        if self.verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
+        if self.verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.min(I)))
 
 
     def lateralDynamicsHopf(self,
@@ -94,7 +94,7 @@ class NFM(object):
         """
 
         """
-        temp_inh = self.Normalize(signal.convolve2d(self.X, self.kernel, mode = 'same') + self.Z)
+        temp_inh = self.Normalize(signal.convolve2d(self.X, self.kernel, mode = 'same') + self.X)
         I = beta*temp_inh + gamma*self.Iext
         I[I < 0] = 0
 
@@ -104,7 +104,7 @@ class NFM(object):
         self.X = self.X + xdot*self.dt
         self.Y = self.Y + ydot*self.dt
 
-        if self.verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
+        if self.verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.min(I)))
 
 
     def lateralDynamicsVPole(self,
@@ -116,7 +116,7 @@ class NFM(object):
         """
 
         """
-        temp_inh = self.Normalize(signal.convolve2d(self.X, self.kernel, mode = 'same') + self.Z)
+        temp_inh = self.Normalize(signal.convolve2d(self.X, self.kernel, mode = 'same') + self.X)
         I = alpha*self.Iext + beta*temp_inh + ci
         I[I < 0] = 0
 
@@ -127,7 +127,7 @@ class NFM(object):
         self.X = self.X + xdot*self.dt
         self.Y = self.Y + ydot*self.dt
 
-        if self.verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.max(I)))
+        if self.verbose: print ('max I: {}'.format(np.max(I)) + '  min: {}'.format(np.min(I)))
 
 
     def spatioTemporalData(self, T, dynamics   = 'FHN',

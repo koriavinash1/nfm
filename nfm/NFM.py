@@ -73,7 +73,7 @@ class NFM(object):
         """
         temp_inh = self.Normalize(signal.convolve2d(self.X, self.kernel, mode = 'same') + self.X)
         I = alpha*self.Iext + beta*temp_inh + ci
-        I[I < 0] = 0
+        # I[I < 0] = 0
 
         fv   = self.X*(alpha - self.X)*(self.X - 1)
         xdot = (fv - self.Y + I)/tau

@@ -14,3 +14,7 @@ neural field models
 
 ![orientationbar](./imgs/MNIST_weights.png)
 
+
+# NFM FHN response on MNIST (for digit '7')
+
+![nfmresponse](./imgs/nfm_response.gif)

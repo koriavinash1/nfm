@@ -32,6 +32,7 @@ for percentage in percentages:
 		data.append(_data_.flatten('F')/255.0 + noise)
 
 	data = 1.0*(np.array(data))
+
 	print (data.shape)
 
 	save_path = '../logs/SOM_weights_MNIST_noise_{}.npy'.format(percentage)
